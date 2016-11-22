@@ -105,37 +105,6 @@ define('app/game', [
             }
             if (!pad.buttons[14].pressed && !pad.buttons[15].pressed)
                 this.body.SetAngularVelocity( 0 )
-
-            /*if (!(pad && pad.axes && pad.axes[2] && pad.axes[3])) return;
-
-            if (pad && pad.buttons && pad.buttons[4] && pad.buttons[4].pressed) {
-                findBodyByName('player1') && findBodyByName('player1').gameObject.markForRemove();
-                spawnPlayer(0, ship2);
-                
-            }
-
-            if (pad && pad.buttons && pad.buttons[5] && pad.buttons[5].pressed) {
-                this.thrusting = true;
-            } else {
-                this.thrusting = false;
-            }
-            const divider = 100;
-            const threshold = 0.5;
-            const thrust = 0.05;
-            this.axes[0] = pad.axes[2] * -1;
-            this.axes[1] = pad.axes[3] * -1;
-            this.rotationVector[0] = this.rotationVector[0] + (this.axes[0] - this.rotationVector[0]) / divider;
-            this.rotationVector[1] = this.rotationVector[1] + (this.axes[1] - this.rotationVector[1]) / divider;
-            const craftAngle = Math.atan2( this.rotationVector[0], this.rotationVector[1] )// - (Math.PI / 2);
-            this.body.SetAngle(craftAngle);
-
-            const fixedVector = [Math.cos(craftAngle - (Math.PI / 2)), Math.sin(craftAngle + (Math.PI / 2))];
-
-            if (this.thrusting) {
-                this.body.ApplyImpulse(new b2Vec2(fixedVector[0] * -thrust * impulseModifier,
-                     fixedVector[1] * thrust * impulseModifier),
-                     this.body.GetWorldCenter());
-            }*/
         }
         draw() {}
     }
@@ -179,7 +148,7 @@ define('app/game', [
             world.SetDebugDraw(debugDraw);
 
             mapLoader.loadJson(world, map1);
-            mapLoader.loadJson(world, car, convertToBox2dCoordinates({ x: 300, y: 300}));
+            mapLoader.loadJson(world, car, convertToBox2dCoordinates({ x: 300, y: 240}));
 
             createAllGameObjects();
             

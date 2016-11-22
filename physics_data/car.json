@@ -14,7 +14,7 @@
 				
 				{
 					"density" : 1,
-					"friction" : 0.2000000029802322,
+					"friction" : 0.4000000059604645,
 					"name" : "fixture0",
 					"polygon" : 
 					{
@@ -29,7 +29,8 @@
 							],
 							"y" : [ -0.50, 0.50, 0.50, -0.50 ]
 						}
-					}
+					},
+					"restitution" : 0.6999999880790710
 				}
 			],
 			"linearVelocity" : 
