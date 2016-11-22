@@ -19,6 +19,7 @@ define('app/game', [
 ) {   
     
     var DEBUG_WRITE_BUTTONS = false;
+    var DEBUG_SUPER_IMPOSED = true;
     
     var canvas = document.getElementById('canvas');
     var context = canvas.getContext('2d');
@@ -55,7 +56,6 @@ define('app/game', [
             super(world, body);
             this.id = id;
             this.color = color;
-            //this.body.SetAngularDamping( 0.1 )
         }
         tick() {
             var pad = userInput.getInput(0);
@@ -95,6 +95,14 @@ define('app/game', [
                 }
                 this.body.ApplyImpulse(new b2Vec2(vector.x, vector.y), this.body.GetWorldCenter())
             }
+            if (pad.buttons[0].pressed) {
+                const angle = this.body.GetAngle() + Math.PI / 2;
+                var vector = {
+                    x: Math.cos(angle) * -0.08,
+                    y: Math.sin(angle) * -0.08
+                }
+                this.body.ApplyImpulse(new b2Vec2(vector.x, vector.y), this.body.GetWorldCenter())
+            }
 
             if (pad.buttons[14].pressed) {
                 this.body.SetAngularVelocity( 2 )
@@ -106,7 +114,11 @@ define('app/game', [
             if (!pad.buttons[14].pressed && !pad.buttons[15].pressed)
                 this.body.SetAngularVelocity( 0 )
         }
-        draw() {}
+        draw() {
+            context.fillStyle = "white";
+            var screenPos = convertToScreenCoordinates(this.body.GetPosition())
+            context.fillRect(screenPos.x -5,screenPos.y - 5, 10, 10)
+        }
     }
 
     function createAllGameObjects() {
@@ -122,13 +134,13 @@ define('app/game', [
     function convertToScreenCoordinates(pos) {
         return {
             x: pos.x * 45,
-            y: pos.y * -45
+            y: pos.y * -22.5
         }
     }
     function convertToBox2dCoordinates(pos) {
         return {
             x: pos.x / 45,
-            y: pos.y / 45 * -1
+            y: pos.y / 22.5 * -1
         }
     }
 
@@ -148,7 +160,7 @@ define('app/game', [
             world.SetDebugDraw(debugDraw);
 
             mapLoader.loadJson(world, map1);
-            mapLoader.loadJson(world, car, convertToBox2dCoordinates({ x: 300, y: 240}));
+            mapLoader.loadJson(world, car, convertToBox2dCoordinates({ x: 300, y: 100}));
 
             createAllGameObjects();
             
@@ -168,14 +180,27 @@ define('app/game', [
             context.fillStyle = "white";
             context.fillRect(0,0,canvas.width, canvas.height);
 
+            context.save()
+            var scale = (DEBUG_SUPER_IMPOSED) ? -0.5 : -1;
+            context.scale(1, scale);
+            world.DrawDebugData();
+            context.restore();
+
+            context.fillStyle = "gray";
+            context.fillRect(0,768,canvas.width, 768);
+
+            if (!DEBUG_SUPER_IMPOSED) {
+                context.save();
+                context.translate(0, 768);
+            }
+
             _.each(gameObjects, function(gameObject) {
                 gameObject.draw();
             });
 
-            context.save()
-            context.scale(1, -1);
-            world.DrawDebugData();
-            context.restore();
+            if (!DEBUG_SUPER_IMPOSED) {
+                context.restore()
+            }
         }
     })
 });
