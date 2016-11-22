@@ -93,7 +93,7 @@ define('app/game', [
 
             this.body.SetLinearVelocity(new b2Vec2(killedVelocityVector[0], killedVelocityVector[1]));
             
-            if (pad.buttons[2].pressed) {
+            if (pad.buttons[0].pressed) {
                 var currentVelocity = this.body.GetLinearVelocity();
                 var limit = 5;
                 var goingSlow = (Math.abs(currentVelocity.x) < limit && Math.abs(currentVelocity.y) < limit);
@@ -105,7 +105,7 @@ define('app/game', [
                 }
                 this.body.ApplyImpulse(new b2Vec2(vector.x, vector.y), this.body.GetWorldCenter())
             }
-            if (pad.buttons[0].pressed) {
+            if (pad.buttons[2].pressed) {
                 const angle = this.body.GetAngle() + Math.PI / 2;
                 var vector = {
                     x: Math.cos(angle) * -0.08,
