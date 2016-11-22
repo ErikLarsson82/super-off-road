@@ -97,9 +97,6 @@ define('app/game', [
                 var currentVelocity = this.body.GetLinearVelocity();
                 var limit = 5;
                 var goingSlow = (Math.abs(currentVelocity.x) < limit && Math.abs(currentVelocity.y) < limit);
-                if (goingSlow) {
-                    console.log('IM GOING SLOW')
-                }
                 var magnitude = (goingSlow) ? 0.18 : 0.05;
                 const angle = this.body.GetAngle() + Math.PI / 2;
                 var vector = {
