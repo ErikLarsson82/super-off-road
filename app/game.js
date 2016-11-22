@@ -62,15 +62,6 @@ define('app/game', [
             super(world, body);
             this.id = id;
             this.color = color;
-
-            customCollisions.push({
-              obj1: this.name,
-              obj2: 'finish',
-              callback: this.finish.bind(this)
-            });
-        }
-        finish() {
-            //console.log('wat');
         }
         tick() {
             var pad = userInput.getInput(0);
@@ -103,10 +94,17 @@ define('app/game', [
             this.body.SetLinearVelocity(new b2Vec2(killedVelocityVector[0], killedVelocityVector[1]));
             
             if (pad.buttons[2].pressed) {
+                var currentVelocity = this.body.GetLinearVelocity();
+                var limit = 5;
+                var goingSlow = (Math.abs(currentVelocity.x) < limit && Math.abs(currentVelocity.y) < limit);
+                if (goingSlow) {
+                    console.log('IM GOING SLOW')
+                }
+                var magnitude = (goingSlow) ? 0.18 : 0.05;
                 const angle = this.body.GetAngle() + Math.PI / 2;
                 var vector = {
-                    x: Math.cos(angle) * 0.05,
-                    y: Math.sin(angle) * 0.05
+                    x: Math.cos(angle) * magnitude,
+                    y: Math.sin(angle) * magnitude
                 }
                 this.body.ApplyImpulse(new b2Vec2(vector.x, vector.y), this.body.GetWorldCenter())
             }
