@@ -1,0 +1,9 @@
+{
+  "name": "super-off-road",
+  "version": "0.1.0",
+  "main": "main.js",
+  "dependencies": {
+    "gameloop-schwein": "^1.0.2",
+    "spritesheet-canvas": "^1.0.2"
+  }
+}
