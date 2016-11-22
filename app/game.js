@@ -26,8 +26,10 @@ define('app/game', [
     var canvas = document.getElementById('canvas');
     var context = canvas.getContext('2d');
 
-    let gameObjects = [];
-    let world = null;
+    let gameObjects;
+    let customCollisions;
+    let lapTracker;
+    let world;
     const FPS = 60;
     const delta = 1.0/FPS;
 
@@ -44,6 +46,8 @@ define('app/game', [
         constructor(world, body) {
             this.world = world;
             this.body = body;
+            this.body.gameObject = this;
+            this.name = this.body.name;
             this.markedForRemoval = false;
         }
         tick() {}
@@ -58,6 +62,15 @@ define('app/game', [
             super(world, body);
             this.id = id;
             this.color = color;
+
+            customCollisions.push({
+              obj1: this.name,
+              obj2: 'finish',
+              callback: this.finish.bind(this)
+            });
+        }
+        finish() {
+            //console.log('wat');
         }
         tick() {
             var pad = userInput.getInput(0);
@@ -138,12 +151,75 @@ define('app/game', [
         }
     }
 
+    class LapTracker {
+        constructor() {
+            this.playerIdx = 0;
+            this.playerLaps = 0;
+            this.timer = new Date();
+            this.bestLap = null;
+            var idx = 1;
+            while(getGameObjectByName('checkpoint' + idx)) {
+                customCollisions.push({
+                  obj1: 'car',
+                  obj2: 'checkpoint' + idx,
+                  callback: this.finish.bind(this, idx)
+                }); 
+                idx++;
+            }
+            customCollisions.push({
+              obj1: 'car',
+              obj2: 'finish',
+              callback: this.finish.bind(this, 0)
+            });
+            this.nrOfCheckPoints = idx-1;
+        }
+        finish(idx) {
+            if (idx === this.playerIdx + 1)
+                this.playerIdx++;
+            
+            if (this.playerIdx === this.nrOfCheckPoints && idx === 0) {
+                this.playerIdx = 0;
+                this.playerLaps++;
+                if (this.bestLap === null || Date.now() - this.timer.getTime() < this.bestLap) {
+                    this.bestLap = Date.now() - this.timer.getTime();
+                }
+                this.timer = new Date();
+            }
+        }
+        getFormattedCurrentTime() {
+            var lapTime = (Date.now() - lapTracker.timer.getTime()) / 1000;
+            return lapTime.toFixed(2);
+        }
+        getFormattedBestTime() {
+            if (this.bestLap) {
+                var best = lapTracker.bestLap / 1000;
+                return best.toFixed(2)
+            } else {
+                return "-"
+            }
+        }
+    }
+
+    function getGameObjectByName(name) {
+        return _.find(gameObjects, function (v) {
+          return v['name'] === name;
+        });
+    };
+
     function createAllGameObjects() {
         for (var b = world.m_bodyList; b; b = b.m_next) {
-            if (b.name === "car") {
-                var player = new Player(world, b, 0, "blue");
-                b.gameObject = player;
-                gameObjects.push(player);
+            switch(b.name) {
+                case 'car':
+                    var player = new Player(world, b, 0, "blue");
+                    gameObjects.push(player);
+                break;
+                case 'finish':
+                    var finish = new GameObject(world, b);
+                    gameObjects.push(finish);
+                break;
+                default:
+                    gameObjects.push(new GameObject(world, b));
+                break;
             }
         }
     }
@@ -168,23 +244,59 @@ define('app/game', [
     debugDraw.SetLineThickness(1.0);
     debugDraw.SetFlags(Box2D.Dynamics.b2DebugDraw.e_shapeBit | Box2D.Dynamics.b2DebugDraw.e_jointBit);
 
+    function createContactListener() {
+        var contactListener = new Box2D.Dynamics.b2ContactListener();
+        contactListener.BeginContact = function(contact) {
+            var contactGameObject1 = contact.m_fixtureA.GetBody().gameObject;
+            var contactGameObject2 = contact.m_fixtureB.GetBody().gameObject;
+            _.each(customCollisions, function(element) {
+                var condition1 = element.obj1 === contactGameObject1.name && (element.obj2 === contactGameObject2.name || element.obj2 === null);
+                var condition2 = element.obj1 === contactGameObject2.name && (element.obj2 === contactGameObject1.name || element.obj2 === null);
+                if (condition1 || condition2) {
+                    element.callback();
+                }
+            });
+        };
+
+        contactListener.EndContact = function(contact) {
+            var contactGameObject1 = contact.m_fixtureA.GetBody().gameObject;
+            var contactGameObject2 = contact.m_fixtureB.GetBody().gameObject;
+            _.each(customCollisions, function(element) {
+              var condition1 = element.obj1 === contactGameObject1.name && (element.obj2 === contactGameObject2.name || element.obj2 === null);
+              var condition2 = element.obj1 === contactGameObject2.name && (element.obj2 === contactGameObject1.name || element.obj2 === null);
+              if ((condition1 || condition2) && element.endCallback) {
+                element.endCallback();
+              }
+            });
+        };
+
+        return contactListener;
+    }
 
     return new Ob.Scene({
         name: 'Game',
         create: function() {
             gameObjects = [];
+            customCollisions = [];
+            
             world = new Box2D.Dynamics.b2World(new Box2D.Common.Math.b2Vec2(0, 0), true);
             world.SetDebugDraw(debugDraw);
+            world.SetContactListener(createContactListener());
 
             mapLoader.loadJson(world, map1);
-            mapLoader.loadJson(world, car, convertToBox2dCoordinates({ x: 130, y: 300}));
+            mapLoader.loadJson(world, car, { x: 11.5486, y: -29.1572 });
 
             createAllGameObjects();
+            
+            lapTracker = new LapTracker();
             
             context.font = "20px Georgia";
         },
         destroy: function() {
-            gameObjects = [];
+            gameObjects = null;
+            customCollisions = null;
+            lapTracker = null;
+            world = null;
         },
         update: function() {
             _.each(gameObjects, function(gameObject) {
@@ -210,12 +322,18 @@ define('app/game', [
                 context.save();
                 context.translate(0, 768);
             }
-
+            
             context.drawImage(images.map1, 0, 0)
             _.each(gameObjects, function(gameObject) {
                 gameObject.draw();
             });
 
+            context.fillStyle = "white";
+            context.font = "30px Georgia";
+            context.fillText("Laps: " + lapTracker.playerLaps, 250, 190)
+            context.fillText(lapTracker.getFormattedCurrentTime(), 500, 190)
+            context.fillText(lapTracker.getFormattedBestTime(), 600, 190)
+            
             if (!DEBUG_SUPER_IMPOSED) {
                 context.restore()
             }
