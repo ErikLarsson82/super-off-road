@@ -5,6 +5,7 @@ define('app/game', [
     'utils',
     'Box2D',
     'mapLoader',
+    'app/images',
     'json!physics_data/map1.json',
     'json!physics_data/car.json'
 ], function (
@@ -14,6 +15,7 @@ define('app/game', [
     utils,
     _box2d,
     mapLoader,
+    images,
     map1,
     car
 ) {   
@@ -117,7 +119,22 @@ define('app/game', [
         draw() {
             context.fillStyle = "white";
             var screenPos = convertToScreenCoordinates(this.body.GetPosition())
-            context.fillRect(screenPos.x -5,screenPos.y - 5, 10, 10)
+            var a = this.body.GetAngle();
+            var cars = [
+                images.car1,
+                images.car2,
+                images.car3,
+                images.car4,
+                images.car5,
+                images.car6,
+                images.car7,
+                images.car8
+            ];
+            const step = Math.PI * 2 / 8;
+            var idx = Math.floor(a / step + step/2) % 8
+            if (idx < 0)
+                idx = idx + 8;
+            context.drawImage(cars[idx], screenPos.x - (images.car1.width/2),screenPos.y - (images.car1.height/2));
         }
     }
 
@@ -160,7 +177,7 @@ define('app/game', [
             world.SetDebugDraw(debugDraw);
 
             mapLoader.loadJson(world, map1);
-            mapLoader.loadJson(world, car, convertToBox2dCoordinates({ x: 300, y: 100}));
+            mapLoader.loadJson(world, car, convertToBox2dCoordinates({ x: 130, y: 300}));
 
             createAllGameObjects();
             
@@ -194,6 +211,7 @@ define('app/game', [
                 context.translate(0, 768);
             }
 
+            context.drawImage(images.map1, 0, 0)
             _.each(gameObjects, function(gameObject) {
                 gameObject.draw();
             });
