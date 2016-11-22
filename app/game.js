@@ -61,23 +61,32 @@ define('app/game', [
             var pad = userInput.getInput(0);
             debugWriteButtons(pad);
 
-            const linear = this.body.GetLinearVelocity();
-            const angle = this.body.GetAngle();
-            var vector = {
-                x: Math.abs(Math.cos(angle) * 0.05),
-                y: Math.abs(Math.sin(angle) * 0.05)
-            }
-        
-            var modX = (linear.x > 0) ? -vector.x : vector.x;
-            var modY = (linear.y > 0) ? -vector.y : vector.y;
-            console.log(linear, angle, vector, modX, modY)
-            this.body.ApplyImpulse(new b2Vec2(modX, modY), this.body.GetWorldCenter())
-
-            if (pad.buttons[0].pressed) {
-                //const currentRightNormal = this.body.GetWorldVector( b2Vec2(1,0) );
-                
+            var rotate = function(v, angle) {
+               angle = normaliseRadians(angle);
+               return [v[0]* Math.cos(angle)-v[1]*Math.sin(angle),
+                       v[0]* Math.sin(angle)+v[1]*Math.cos(angle)];
             }
 
+            var normaliseRadians = function(radians){
+                radians=radians % (2*Math.PI);
+                if(radians<0) {
+                    radians+=(2*Math.PI);
+                }
+                return radians;
+            };
+
+            var dot = function(v1, v2){
+               return (v1[0] * v2[0]) + (v1[1] * v2[1]);
+            };
+
+            var velocity = this.body.GetLinearVelocity();
+            var sideways_axis = rotate((velocity[1]>0) ? [0, 1]:[0, -1] , this.body.GetAngle())
+         
+            var dotprod = dot([velocity.x, velocity.y], sideways_axis);
+            var killedVelocityVector = [sideways_axis[0]*dotprod, sideways_axis[1]*dotprod]
+
+            this.body.SetLinearVelocity(new b2Vec2(killedVelocityVector[0], killedVelocityVector[1]));
+            
             if (pad.buttons[2].pressed) {
                 const angle = this.body.GetAngle() + Math.PI / 2;
                 var vector = {
