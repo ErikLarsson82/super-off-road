@@ -3,8 +3,10 @@ requirejs.config({
     baseUrl: 'lib',
     paths: {
       'app': '../app',
+      'physics_data': '../physics_data',
       'GameLoop': '../node_modules/gameloop-schwein/GameLoop',
-      'SpriteSheet': '../node_modules/spritesheet-canvas/SpriteSheet'
+      'SpriteSheet': '../node_modules/spritesheet-canvas/SpriteSheet',
+      'Box2D': 'Box2D',
     }
 });
 
@@ -22,7 +24,7 @@ requirejs([
  
     sceneManager.setScenes([game, splash])
      
-    sceneManager.changeScene('Splash')
+    sceneManager.changeScene('Game')
     
     var config = {
         callback: function(delta) { sceneManager.update(delta); sceneManager.draw(context, canvas); },
